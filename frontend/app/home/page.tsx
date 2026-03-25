@@ -10,23 +10,62 @@ import MenuIcon from '@mui/icons-material/Menu';
 import Container from '@mui/material/Container';
 import TextField from '@mui/material/TextField';
 import SendIcon from '@mui/icons-material/Send';
+import Drawer from '@mui/material/Drawer';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import InboxIcon from '@mui/icons-material/MoveToInbox';
+import MailIcon from '@mui/icons-material/Mail';
 
 
 import { useState } from 'react';
 
+interface Chat {
+    userPrompt: string,
+    queryResponse: string
+};
+
 export default function Page() {
-    const [initialChat, setInitialChat] = useState(true);
+    const [open, setOpen] = useState(false);
     const [prompt, setPrompt] = useState('');
-    const [promptResponse, setPromptResponse] = useState('');
+    const [chatHistory, setChatHistory] = useState<Chat[]>([]);
+
+    const toggleDrawer = (newOpen: boolean) => () => {
+        setOpen(newOpen);
+    };
+
+    const DrawerList = (
+        <Box sx={{ width: 250 }} role="presentation" onClick={toggleDrawer(false)}>
+            <List>
+                {['Inbox', 'Starred', 'Send email', 'Drafts'].map((text, index) => (
+                    <ListItem key={text} disablePadding>
+                        <ListItemButton>
+                            <ListItemIcon>
+                                {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
+                            </ListItemIcon>
+                            <ListItemText primary={text} />
+                        </ListItemButton>
+                    </ListItem>
+                ))}
+            </List>
+        </Box>
+    );
 
     function handlePromptChange(event: any) {
         setPrompt(event.target.value);
     }
 
     async function sendPrompt() {
+        let finalPrompt = "";
+
         if (!prompt) {
-            setPrompt("Tell me a funny joke");
+            finalPrompt = "Tell me a funny joke";
+        } else {
+            finalPrompt = prompt;
         }
+        // const finalPrompt = prompt || "Tell me a funny joke"
 
         try {
             const response = await fetch("http://localhost:3001/query", {
@@ -34,14 +73,14 @@ export default function Page() {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({userPrompt: prompt})
+                body: JSON.stringify({ userPrompt: finalPrompt })
             });
-            if (! await response.ok) {
+            if (!response.ok) {
                 throw new Error(`Error Status: ${response.status}`);
             }
             const data = await response.json();
-
-            setPromptResponse(data.response);
+            setChatHistory([...chatHistory, { userPrompt: finalPrompt, queryResponse: data.response }]);
+            setPrompt("");
         } catch (err) {
             console.log(err);
         }
@@ -58,9 +97,13 @@ export default function Page() {
                             color="inherit"
                             aria-label="menu"
                             sx={{ mr: 2 }}
+                            onClick={toggleDrawer(true)}
                         >
                             <MenuIcon />
                         </IconButton>
+                        <Drawer open={open} onClose={toggleDrawer(false)}>
+                            {DrawerList}
+                        </Drawer>
                         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
                             QueryPi
                         </Typography>
@@ -70,17 +113,77 @@ export default function Page() {
             </Box>
 
             <Box>
-                {initialChat ?
-                    <Container>
-                        <Typography variant="h6" component="div">What would you like to do?</Typography>
-                        <TextField id="outlined-basic" label="Your prompt" variant="outlined" onChange={handlePromptChange} />
-                        <IconButton aria-label="delete" color='primary' onClick={sendPrompt}>
-                            <SendIcon />
-                        </IconButton>
-                        {!promptResponse ? <></> : <textarea value={promptResponse} readOnly />}
+                {chatHistory.length == 0 ?
+                    <Container sx={{ height: '70vh', overflowY: 'auto' }}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+                            <Typography variant="h6" component="div">What would you like to do?</Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                                <TextField
+                                    id="outlined-basic"
+                                    label="Your prompt"
+                                    variant="outlined"
+                                    InputProps={{ sx: { borderRadius: "20px" } }}
+                                    sx={{ flexGrow: 1 }}
+                                    value={prompt}
+                                    onChange={handlePromptChange} />
+                                <IconButton aria-label="send" color='primary' onClick={sendPrompt}>
+                                    <SendIcon />
+                                </IconButton>
+                            </Box>
+                            {/* {!promptResponse ? <></> : <textarea value={promptResponse} readOnly />} */}
+                        </Box>
                     </Container>
                     :
-                    <p>Done</p>}
+                    <Container sx={{ height: '70vh', overflowY: 'auto' }}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+                            {chatHistory.map((chat, index) => (
+                                <Box key={index}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                        <Box
+                                            sx={{
+                                                bgcolor: 'primary.main',
+                                                color: 'white',
+                                                px: 2,
+                                                py: 1,
+                                                borderRadius: '16px',
+                                                maxWidth: '70%',
+                                            }}
+                                        >
+                                            {chat.userPrompt}
+                                        </Box>
+                                    </Box>
+                                    <Box sx={{ display: 'flex', justifyContent: 'flex-start', mt: 1 }}>
+                                        <Box
+                                            sx={{
+                                                bgcolor: 'grey.200',
+                                                px: 2,
+                                                py: 1,
+                                                borderRadius: '16px',
+                                                maxWidth: '70%',
+                                            }}
+                                        >
+                                            {chat.queryResponse}
+                                        </Box>
+                                    </Box>
+                                </Box>
+                            ))}
+
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                                <TextField
+                                    id="outlined-basic"
+                                    label="Your prompt"
+                                    variant="outlined"
+                                    InputProps={{ sx: { borderRadius: "20px" } }}
+                                    sx={{ flexGrow: 1 }}
+                                    value={prompt}
+                                    onChange={handlePromptChange} />
+                                <IconButton aria-label="send" color='primary' onClick={sendPrompt}>
+                                    <SendIcon />
+                                </IconButton>
+                            </Box>
+                        </Box>
+                    </Container>
+                }
             </Box>
         </>
     );

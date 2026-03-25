@@ -35,7 +35,6 @@ const client = new OpenAI({
 });
 
 app.post('/query', async (req, res) => {
-
     const modelResponse = await client.responses.create({
         model: "openai/gpt-oss-20b",
         input: req.body.userPrompt
