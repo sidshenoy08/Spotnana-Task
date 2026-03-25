@@ -15,6 +15,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 import { useState, SyntheticEvent } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -46,6 +47,8 @@ function a11yProps(index: number) {
 }
 
 export default function Home() {
+  const router = useRouter();
+
   const [value, setValue] = useState(0);
 
   const initialNewUserState = {
@@ -98,18 +101,60 @@ export default function Home() {
     setErrorDialogOpen(false);
   }
 
-  function registerUser() {
+  async function registerUser() {
     if (!(newUserData.password === newUserData.cPassword)) {
       setErrorDialogOpen(true);
       setNewUserData(initialNewUserState);
       return;
     }
-    console.log(newUserData);
+    try {
+      const response = await fetch("http://localhost:3001/register", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newUserData)
+      });
+      if (!response.ok) {
+        throw new Error(`Error Status: ${response.status}`);
+      }
+      setNewUserData(initialNewUserState);
+      if (response.status === 201) {
+        try {
+          router.push("/home");
+        } catch (err) {
+          console.log(err);
+        }
+      }
+    } catch (err) {
+      console.log(err);
+    }
+
   }
 
-  function loginUser() {
-    console.log(existingUserData);
-    setExistingUserData(initialExistingUserState);
+  async function loginUser() {
+    try {
+      const response = await fetch("http://localhost:3001/login", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(existingUserData)
+      });
+      if (!response.ok) {
+        throw new Error(`Error Status: ${response.status}`);
+      }
+      setExistingUserData(initialExistingUserState);
+      if (response.status === 200) {
+        try {
+          router.push("/home");
+        } catch (err) {
+          console.log(err);
+        }
+      }
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   return (

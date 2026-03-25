@@ -18,6 +18,7 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import InboxIcon from '@mui/icons-material/MoveToInbox';
 import MailIcon from '@mui/icons-material/Mail';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 
 import { useState } from 'react';
@@ -84,6 +85,10 @@ export default function Page() {
         } catch (err) {
             console.log(err);
         }
+    }
+
+    function clearChat() {
+        setChatHistory([]);
     }
 
     return (
@@ -179,6 +184,9 @@ export default function Page() {
                                     onChange={handlePromptChange} />
                                 <IconButton aria-label="send" color='primary' onClick={sendPrompt}>
                                     <SendIcon />
+                                </IconButton>
+                                <IconButton aria-label="clear" color='error' onClick={clearChat}>
+                                    <DeleteIcon />
                                 </IconButton>
                             </Box>
                         </Box>
