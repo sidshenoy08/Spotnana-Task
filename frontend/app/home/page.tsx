@@ -16,9 +16,9 @@ import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import InboxIcon from '@mui/icons-material/MoveToInbox';
-import MailIcon from '@mui/icons-material/Mail';
 import DeleteIcon from '@mui/icons-material/Delete';
+import InfoOutlineSharpIcon from '@mui/icons-material/InfoOutlineSharp';
+import InfoSharpIcon from '@mui/icons-material/InfoSharp';
 
 
 import { useEffect, useState } from 'react';
@@ -26,6 +26,7 @@ import { useRouter } from 'next/navigation';
 
 interface Chat {
     chatId?: string,
+    userId?: string,
     userPrompt: string,
     queryResponse: string
 };
@@ -34,8 +35,10 @@ export default function Page() {
     const router = useRouter();
 
     const [open, setOpen] = useState(false);
+    const [isHydrating, setIsHydrating] = useState(false);
     const [prompt, setPrompt] = useState('');
     const [chatHistory, setChatHistory] = useState<Chat[]>([]);
+    const [currentChat, setCurrentChat] = useState<Chat[]>([]);
     const [chatId, setChatId] = useState('');
 
     const toggleDrawer = (newOpen: boolean) => () => {
@@ -45,13 +48,18 @@ export default function Page() {
     const DrawerList = (
         <Box sx={{ width: 250 }} role="presentation" onClick={toggleDrawer(false)}>
             <List>
-                {['Inbox', 'Starred', 'Send email', 'Drafts'].map((text, index) => (
-                    <ListItem key={text} disablePadding>
+                {chatHistory.map((chat, index) => (
+                    <ListItem key={chat._id} onClick={() => {
+                        setIsHydrating(true);
+                        setCurrentChat(chat.messages);
+                        setChatId(chat._id);
+                    }}
+                        disablePadding>
                         <ListItemButton>
                             <ListItemIcon>
-                                {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
+                                {index % 2 === 0 ? <InfoOutlineSharpIcon /> : <InfoSharpIcon />}
                             </ListItemIcon>
-                            <ListItemText primary={text} />
+                            <ListItemText primary={chat.messages[0].userPrompt} />
                         </ListItemButton>
                     </ListItem>
                 ))}
@@ -60,9 +68,61 @@ export default function Page() {
     );
 
     useEffect(() => {
-        if (chatHistory.length > 0) {
+        const retrieveChats = async () => {
+            try {
+                const response = await fetch("http://localhost:3001/retrieve", {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                setChatHistory(data.userChats);
+            } catch (err) {
+                console.log(err);
+            }
+        }
+
+        retrieveChats();
+    }, []);
+
+    useEffect(() => {
+        // const retrieveChats = async () => {
+        //     try {
+        //         const response = await fetch("http://localhost:3001/retrieve", {
+        //             method: 'GET',
+        //             credentials: 'include',
+        //             headers: {
+        //                 'Content-Type': 'application/json'
+        //             }
+        //         });
+
+        //         if (!response.ok) {
+        //             throw new Error(`Error Status: ${response.status}`);
+        //         }
+
+        //         const data = await response.json();
+        //         setChatHistory(data.userChats);
+        //         console.log(data.userChats);
+        //     } catch (err) {
+        //         console.log(err);
+        //     }
+        // }
+
+        if (isHydrating) {
+            setIsHydrating(false);
+            return;
+        }
+
+        if (currentChat.length > 0) {
             const saveChat = async () => {
-                const chat = chatHistory.at(-1);
+                const chat = currentChat.at(-1);
                 chat.chatId = chatId;
 
                 try {
@@ -85,9 +145,11 @@ export default function Page() {
                     console.log(err);
                 }
             };
+
             saveChat();
+            // retrieveChats();
         }
-    }, [chatHistory]);
+    }, [currentChat]);
 
     function handlePromptChange(event: any) {
         setPrompt(event.target.value);
@@ -116,7 +178,7 @@ export default function Page() {
                 throw new Error(`Error Status: ${response.status}`);
             }
             const data = await response.json();
-            setChatHistory([...chatHistory, { userPrompt: finalPrompt, queryResponse: data.response }]);
+            setCurrentChat([...currentChat, { userPrompt: finalPrompt, queryResponse: data.response }]);
             setPrompt("");
         } catch (err) {
             console.log(err);
@@ -124,7 +186,7 @@ export default function Page() {
     }
 
     function clearChat() {
-        setChatHistory([]);
+        setCurrentChat([]);
     }
 
     async function logout() {
@@ -173,7 +235,7 @@ export default function Page() {
             </Box>
 
             <Box>
-                {chatHistory.length == 0 ?
+                {currentChat.length == 0 ?
                     <Container sx={{ height: '70vh', overflowY: 'auto' }}>
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
                             <Typography variant="h6" component="div">What would you like to do?</Typography>
@@ -196,7 +258,7 @@ export default function Page() {
                     :
                     <Container sx={{ height: '70vh', overflowY: 'auto' }}>
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-                            {chatHistory.map((chat, index) => (
+                            {currentChat.map((chat, index) => (
                                 <Box key={index}>
                                     <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                                         <Box

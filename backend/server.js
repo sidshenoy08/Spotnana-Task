@@ -135,6 +135,23 @@ app.post('/query', authMiddleware, async (req, res) => {
     });
 });
 
+app.get('/retrieve', authMiddleware, async (req, res) => {
+    try {
+        const client = new MongoClient(process.env.DB_URL);
+        await client.connect();
+        const database = client.db('spotnana');
+        const chats = database.collection('chats');
+
+        const userChats = await chats.find({ userId: req.user.userId }).toArray();
+
+        if (userChats) {
+            res.status(200).json({ userChats });
+        }
+    } catch (err) {
+        console.log(err);
+    }
+});
+
 app.post('/save', authMiddleware, async (req, res) => {
     try {
         const client = new MongoClient(process.env.DB_URL);
