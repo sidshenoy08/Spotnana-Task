@@ -22,6 +22,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface Chat {
     userPrompt: string,
@@ -29,6 +30,8 @@ interface Chat {
 };
 
 export default function Page() {
+    const router = useRouter();
+
     const [open, setOpen] = useState(false);
     const [prompt, setPrompt] = useState('');
     const [chatHistory, setChatHistory] = useState<Chat[]>([]);
@@ -71,6 +74,7 @@ export default function Page() {
         try {
             const response = await fetch("http://localhost:3001/query", {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json'
                 },
@@ -89,6 +93,25 @@ export default function Page() {
 
     function clearChat() {
         setChatHistory([]);
+    }
+
+    async function logout() {
+        try {
+            const response = await fetch("http://localhost:3001/logout", {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Error Status: ${response.status}`);
+            }
+            router.push("/");
+        } catch (err) {
+            console.log(err);
+        }
     }
 
     return (
@@ -112,7 +135,7 @@ export default function Page() {
                         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
                             QueryPi
                         </Typography>
-                        <Button color="inherit">Logout</Button>
+                        <Button color="inherit" onClick={logout}>Logout</Button>
                     </Toolbar>
                 </AppBar>
             </Box>
