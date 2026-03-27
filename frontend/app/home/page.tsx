@@ -21,10 +21,11 @@ import MailIcon from '@mui/icons-material/Mail';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface Chat {
+    chatId?: string,
     userPrompt: string,
     queryResponse: string
 };
@@ -35,6 +36,7 @@ export default function Page() {
     const [open, setOpen] = useState(false);
     const [prompt, setPrompt] = useState('');
     const [chatHistory, setChatHistory] = useState<Chat[]>([]);
+    const [chatId, setChatId] = useState('');
 
     const toggleDrawer = (newOpen: boolean) => () => {
         setOpen(newOpen);
@@ -56,6 +58,36 @@ export default function Page() {
             </List>
         </Box>
     );
+
+    useEffect(() => {
+        if (chatHistory.length > 0) {
+            const saveChat = async () => {
+                const chat = chatHistory.at(-1);
+                chat.chatId = chatId;
+
+                try {
+                    const response = await fetch("http://localhost:3001/save", {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(chat)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Error Status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    setChatId(data.message);
+                } catch (err) {
+                    console.log(err);
+                }
+            };
+            saveChat();
+        }
+    }, [chatHistory]);
 
     function handlePromptChange(event: any) {
         setPrompt(event.target.value);

@@ -3,8 +3,9 @@ import dotenv from 'dotenv';
 import OpenAI from "openai";
 import cors from 'cors';
 import bcrypt from 'bcrypt';
-import { MongoClient } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb';
 import jwt from 'jsonwebtoken';
+import cookieParser from 'cookie-parser';
 
 import { authMiddleware } from './middleware/auth.js';
 // import { connectDB, getMongoDBCollection } from './db.js';
@@ -13,6 +14,7 @@ const app = express();
 dotenv.config();
 
 app.use(express.json());
+app.use(cookieParser());
 
 // const allowedOrigins = [
 //     'http://localhost:3000/query'
@@ -131,6 +133,32 @@ app.post('/query', authMiddleware, async (req, res) => {
     res.json({
         response: modelResponse.output_text
     });
+});
+
+app.post('/save', authMiddleware, async (req, res) => {
+    try {
+        const client = new MongoClient(process.env.DB_URL);
+        await client.connect();
+        const database = client.db('spotnana');
+        const chats = database.collection('chats');
+
+        if (!req.body.chatId) {
+            const result = await chats.insertOne({ userId: req.user.userId, messages: [{ userPrompt: req.body.userPrompt, queryResponse: req.body.queryResponse }] });
+            if (result.acknowledged) {
+                res.status(200).json({ message: result.insertedId });
+            }
+        } else {
+            const result = await chats.updateOne({
+                _id: new ObjectId(req.body.chatId),
+                userId: req.user.userId
+            },
+                { $push: { messages: { userPrompt: req.body.userPrompt, queryResponse: req.body.queryResponse } } },
+            );
+        }
+
+    } catch (err) {
+        console.log(err);
+    }
 });
 
 app.post('/logout', (req, res) => {
