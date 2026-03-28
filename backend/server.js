@@ -8,32 +8,12 @@ import jwt from 'jsonwebtoken';
 import cookieParser from 'cookie-parser';
 
 import { authMiddleware } from './middleware/auth.js';
-// import { connectDB, getMongoDBCollection } from './db.js';
 
 const app = express();
 dotenv.config();
 
 app.use(express.json());
 app.use(cookieParser());
-
-// const allowedOrigins = [
-//     'http://localhost:3000/query'
-// ];
-
-// const corsOptions = {
-//   origin: function (origin, callback) {
-//     if (!origin) return callback(null, true);
-
-//     if (allowedOrigins.indexOf(origin) !== -1) {
-//       callback(null, true);
-//     } else {
-//       callback(new Error('Not allowed by CORS'));
-//     }
-//   },
-//   credentials: true,
-//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-//   allowedHeaders: ['Content-Type', 'Authorization']
-// };
 
 app.use(cors({
     origin: "http://localhost:3000",

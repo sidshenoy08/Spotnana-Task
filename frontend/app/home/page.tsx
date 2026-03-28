@@ -93,28 +93,6 @@ export default function Page() {
     }, []);
 
     useEffect(() => {
-        // const retrieveChats = async () => {
-        //     try {
-        //         const response = await fetch("http://localhost:3001/retrieve", {
-        //             method: 'GET',
-        //             credentials: 'include',
-        //             headers: {
-        //                 'Content-Type': 'application/json'
-        //             }
-        //         });
-
-        //         if (!response.ok) {
-        //             throw new Error(`Error Status: ${response.status}`);
-        //         }
-
-        //         const data = await response.json();
-        //         setChatHistory(data.userChats);
-        //         console.log(data.userChats);
-        //     } catch (err) {
-        //         console.log(err);
-        //     }
-        // }
-
         if (isHydrating) {
             setIsHydrating(false);
             return;
@@ -147,7 +125,6 @@ export default function Page() {
             };
 
             saveChat();
-            // retrieveChats();
         }
     }, [currentChat]);
 
@@ -211,7 +188,7 @@ export default function Page() {
     return (
         <>
             <Box sx={{ flexGrow: 1 }}>
-                <AppBar position="static">
+                <AppBar position="static" elevation={0} sx={{ bgcolor: 'transparent', color: 'black' }}>
                     <Toolbar>
                         <IconButton
                             size="large"
