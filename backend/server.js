@@ -158,6 +158,24 @@ app.post('/save', authMiddleware, async (req, res) => {
     }
 });
 
+app.post('/delete', authMiddleware, async (req, res) => {
+    try {
+        const client = new MongoClient(process.env.DB_URL);
+        await client.connect();
+        const database = client.db('spotnana');
+        const chats = database.collection('chats');
+
+        const result = await chats.deleteOne({ _id: new ObjectId(req.body.chat) });
+
+        if (result.acknowledged) {
+            res.status(200).json({ message: 'Chat deleted!' });
+        }
+
+    } catch (err) {
+        console.log(err);
+    }
+});
+
 app.post('/logout', (req, res) => {
     res.clearCookie('token');
     res.status(200).json({ message: 'Logged out' });

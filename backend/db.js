@@ -8,15 +8,12 @@ const client = new MongoClient(process.env.DB_URL);
 
 let database;
 
-export async function connectDB() {
+export async function getMongoDBCollection(collection) {
     if (!database) {
-        // await client.connect();
+        await client.connect();
         database = client.db('spotnana');
-        console.log("MongoDB connected");
+        return database.collection(collection);
+        // console.log("MongoDB connected");
     }
     return database;
-}
-
-export async function getMongoDBCollection() {
-    return database.collection('users');
 }

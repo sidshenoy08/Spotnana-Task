@@ -123,7 +123,6 @@ export default function Page() {
                     console.log(err);
                 }
             };
-
             saveChat();
         }
     }, [currentChat]);
@@ -162,8 +161,30 @@ export default function Page() {
         }
     }
 
-    function clearChat() {
-        setCurrentChat([]);
+    async function clearChat() {
+        try {
+            const response = await fetch("http://localhost:3001/delete", {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ chat: chatId })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Error Status: ${response.status}`);
+            }
+
+            setChatHistory(prev =>
+                prev.filter(chat => chat._id !== chatId)
+            );
+
+            setCurrentChat([]);
+            setChatId('');
+        } catch (err) {
+            console.log(err);
+        }
     }
 
     async function logout() {
