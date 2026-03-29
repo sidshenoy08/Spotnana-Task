@@ -76,7 +76,7 @@ export default function Home() {
   useEffect(() => {
     const logout = async () => {
       try {
-        const response = await fetch("http://localhost:3001/logout", {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/logout`, {
           method: 'POST',
           credentials: 'include',
           headers: {
@@ -134,7 +134,7 @@ export default function Home() {
       return;
     }
     try {
-      const response = await fetch("http://localhost:3001/register", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/register`, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -161,7 +161,7 @@ export default function Home() {
 
   async function loginUser() {
     try {
-      const response = await fetch("http://localhost:3001/login", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/login`, {
         method: 'POST',
         credentials: 'include',
         headers: {

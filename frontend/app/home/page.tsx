@@ -17,11 +17,13 @@ import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
 import InfoOutlineSharpIcon from '@mui/icons-material/InfoOutlineSharp';
 import InfoSharpIcon from '@mui/icons-material/InfoSharp';
+import CircularProgress from '@mui/material/CircularProgress';
 
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface Chat {
@@ -40,6 +42,7 @@ export default function Page() {
     const [chatHistory, setChatHistory] = useState<Chat[]>([]);
     const [currentChat, setCurrentChat] = useState<Chat[]>([]);
     const [chatId, setChatId] = useState('');
+    const [loading, setLoading] = useState(false);
 
     const toggleDrawer = (newOpen: boolean) => () => {
         setOpen(newOpen);
@@ -70,7 +73,7 @@ export default function Page() {
     useEffect(() => {
         const retrieveChats = async () => {
             try {
-                const response = await fetch("http://localhost:3001/retrieve", {
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/retrieve`, {
                     method: 'GET',
                     credentials: 'include',
                     headers: {
@@ -104,7 +107,7 @@ export default function Page() {
                 chat.chatId = chatId;
 
                 try {
-                    const response = await fetch("http://localhost:3001/save", {
+                    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/save`, {
                         method: 'POST',
                         credentials: 'include',
                         headers: {
@@ -127,6 +130,13 @@ export default function Page() {
         }
     }, [currentChat]);
 
+    function createNewChat() {
+        setIsHydrating(true);
+        setCurrentChat([]);
+        setChatId('');
+        setOpen(false);
+    }
+
     function handlePromptChange(event: any) {
         setPrompt(event.target.value);
     }
@@ -139,10 +149,10 @@ export default function Page() {
         } else {
             finalPrompt = prompt;
         }
-        // const finalPrompt = prompt || "Tell me a funny joke"
 
         try {
-            const response = await fetch("http://localhost:3001/query", {
+            setLoading(true);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/query`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
@@ -158,12 +168,14 @@ export default function Page() {
             setPrompt("");
         } catch (err) {
             console.log(err);
+        } finally {
+            setLoading(false);
         }
     }
 
     async function clearChat() {
         try {
-            const response = await fetch("http://localhost:3001/delete", {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/delete`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
@@ -189,7 +201,7 @@ export default function Page() {
 
     async function logout() {
         try {
-            const response = await fetch("http://localhost:3001/logout", {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/logout`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
@@ -222,6 +234,11 @@ export default function Page() {
                             <MenuIcon />
                         </IconButton>
                         <Drawer open={open} onClose={toggleDrawer(false)}>
+                            <Box sx={{ p: 2, display: 'flex', justifyContent: 'center' }}>
+                                <Button variant="contained" startIcon={<AddIcon />} onClick={createNewChat}>
+                                    New Chat
+                                </Button>
+                            </Box>
                             {DrawerList}
                         </Drawer>
                         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
@@ -245,12 +262,31 @@ export default function Page() {
                                     InputProps={{ sx: { borderRadius: "20px" } }}
                                     sx={{ flexGrow: 1 }}
                                     value={prompt}
-                                    onChange={handlePromptChange} />
-                                <IconButton aria-label="send" color='primary' onClick={sendPrompt}>
+                                    onChange={handlePromptChange}
+                                    disabled={loading} />
+                                <IconButton aria-label="send" color='primary' onClick={sendPrompt} disabled={loading}>
                                     <SendIcon />
                                 </IconButton>
                             </Box>
-                            {/* {!promptResponse ? <></> : <textarea value={promptResponse} readOnly />} */}
+                            {loading && (
+                                <Box sx={{ display: 'flex', justifyContent: 'flex-start', mt: 1 }}>
+                                    <Box
+                                        sx={{
+                                            bgcolor: 'grey.200',
+                                            px: 2,
+                                            py: 1,
+                                            borderRadius: '16px',
+                                            maxWidth: '70%',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 1
+                                        }}
+                                    >
+                                        <CircularProgress size={16} />
+                                        <Typography variant="body2">Thinking...</Typography>
+                                    </Box>
+                                </Box>
+                            )}
                         </Box>
                     </Container>
                     :
@@ -296,14 +332,34 @@ export default function Page() {
                                     InputProps={{ sx: { borderRadius: "20px" } }}
                                     sx={{ flexGrow: 1 }}
                                     value={prompt}
-                                    onChange={handlePromptChange} />
-                                <IconButton aria-label="send" color='primary' onClick={sendPrompt}>
+                                    onChange={handlePromptChange}
+                                    disabled={loading} />
+                                <IconButton aria-label="send" color='primary' onClick={sendPrompt} disabled={loading}>
                                     <SendIcon />
                                 </IconButton>
-                                <IconButton aria-label="clear" color='error' onClick={clearChat}>
+                                <IconButton aria-label="clear" color='error' onClick={clearChat} disabled={loading}>
                                     <DeleteIcon />
                                 </IconButton>
                             </Box>
+                            {loading && (
+                                <Box sx={{ display: 'flex', justifyContent: 'flex-start', mt: 1 }}>
+                                    <Box
+                                        sx={{
+                                            bgcolor: 'grey.200',
+                                            px: 2,
+                                            py: 1,
+                                            borderRadius: '16px',
+                                            maxWidth: '70%',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 1
+                                        }}
+                                    >
+                                        <CircularProgress size={16} />
+                                        <Typography variant="body2">Thinking...</Typography>
+                                    </Box>
+                                </Box>
+                            )}
                         </Box>
                     </Container>
                 }
