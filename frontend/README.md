@@ -2,6 +2,12 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+Set up .env file
+
+```bash
+NEXT_PUBLIC_API_URL=#Backend Server URL
+```
+
 Install the project dependencies
 
 ```bash
